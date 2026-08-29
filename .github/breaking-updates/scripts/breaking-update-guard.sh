@@ -233,9 +233,12 @@ check_updates() {
 
   manifest_file="$(mktemp)"
   if ! git show "$upstream_ref:$MANIFEST_PATH" > "$manifest_file" 2>/dev/null; then
-    echo "Breaking update manifest not found at $UPSTREAM_REPO:$UPSTREAM_BRANCH/$MANIFEST_PATH" >&2
+    echo "::warning::Breaking update manifest not found at $UPSTREAM_REPO:$UPSTREAM_BRANCH/$MANIFEST_PATH; skipping compatibility guard."
+    append_summary "### ℹ️ 未发现兼容性更新清单 / Breaking update manifest not found"
+    append_summary "上游仓库未提供 \`$MANIFEST_PATH\`，本次将跳过兼容性更新保护并继续同步。"
+    append_summary "The upstream repository does not provide \`$MANIFEST_PATH\`. This run will skip the compatibility guard and continue synchronization."
     rm -f "$manifest_file"
-    return 1
+    return 0
   fi
 
   if ! jq -e '(.schemaVersion == 1) and (.updates | type == "array")' "$manifest_file" >/dev/null; then
